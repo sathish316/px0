@@ -53,6 +53,7 @@ func cleanBasePath(p string) string {
 // REST API endpoints, Server-Sent Events (SSE), and workspace services.
 type Server struct {
 	ix        *Index
+	viz       vizCache
 	lsp       *lspManager
 	tel       *TelemetryService // nil in tests; Track is nil-safe
 	agent     *agentManager     // nil unless main wires editing for this session
@@ -182,6 +183,8 @@ func (s *Server) registerRoutes() {
 	s.mux.HandleFunc(s.routePath("/api/pr/comments/issue"), s.handlePRIssueCommentPost)
 	s.mux.HandleFunc(s.routePath("/api/pr/comments/review-reply"), s.handlePRReviewCommentReply)
 	s.mux.HandleFunc(s.routePath("/api/session"), s.handleSession)
+	s.mux.HandleFunc(s.routePath("/api/viz/list"), s.handleVizList)
+	s.mux.HandleFunc(s.routePath("/api/viz"), s.handleViz)
 }
 
 // NewServer creates and initializes a px0 Server instance, binding index and language servers,
