@@ -259,7 +259,7 @@ const BUILTIN_SCHEMA = [
   {
     key: "agent.harness",
     title: "Coding Harness",
-    description: "Coding agent harness (the CLI that runs your edits, e.g. claude, cursor-agent, agy, opencode, fx). Pick the model in the editor, not here: each harness offers its own list.",
+    description: "Coding agent harness (the CLI that runs your edits, e.g. claude, cursor-agent, agy, opencode, fx, codex). Pick the model in the editor, not here: each harness offers its own list.",
     category: "Agent / AI",
     type: "string",
     default: ""
@@ -717,7 +717,7 @@ function renderSettingsList() {
       if (key === 'agent.harness') {
         // Harness names only; models are chosen per harness in the editor.
         const known = (S.meta?.agents || []).map(h => h.name);
-        stringPresets = known.length ? known : ['claude', 'cursor-agent', 'agy', 'opencode', 'fx'];
+        stringPresets = known.length ? known : ['claude', 'cursor-agent', 'agy', 'opencode', 'fx', 'codex'];
       }
       const presetPills = stringPresets.length ? `
         <div class="settings-apt-bar">

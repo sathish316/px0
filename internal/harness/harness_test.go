@@ -152,6 +152,13 @@ func TestParseModels(t *testing.T) {
 	if got := parseFxModels(`{"kind":"models","error":"could not list models","code":"AuthenticationRejected"}`); len(got) != 0 {
 		t.Fatalf("fx error doc = %v", got)
 	}
+	codex := "WARNING: no aliases\n" + `{"models":[{"slug":"gpt-6-astra","visibility":"list"},{"slug":"hidden-one","visibility":"hide"},{"slug":"gpt-6-luna","visibility":"list"}]}`
+	if got := parseCodexModels(codex); !reflect.DeepEqual(got, []string{"gpt-6-astra", "gpt-6-luna"}) {
+		t.Fatalf("codex = %v", got)
+	}
+	if got := parseCodexModels("not json"); len(got) != 0 {
+		t.Fatalf("codex bad = %v", got)
+	}
 }
 
 // A listing harness is run for real (here a fake script), and what it prints

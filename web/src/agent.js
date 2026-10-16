@@ -83,7 +83,7 @@ export function applyAgentMeta() {
 }
 
 // Fills a model dropdown for harness h. The control stays visible when the
-// harness lists no models (e.g. fx before it is signed in), so Harness and Model
+// harness lists no models (e.g. it is not signed in), so Harness and Model
 // remain two separate choices and the user can see the harness uses its own default.
 function fillModelSelect(sel, h, currentModel, disabled) {
   sel.innerHTML = '';

@@ -12,6 +12,7 @@ chosen, the model flag is left out and the harness uses its own configured model
 | `agy`          | `agy`          | `agy --dangerously-skip-permissions --mode accept-edits --model <model> -p <prompt>` |
 | `opencode`     | `opencode`     | `opencode run -m <model> <prompt>`                                       |
 | `fx`           | `fx`           | `fx ask --auto --model <model> -- <prompt>`                              |
+| `codex`        | `codex`        | `codex exec --sandbox workspace-write --skip-git-repo-check -m <model> -- <prompt>` |
 
 Every one of these can list the models it offers, using its own command, so
 `DiscoverModels` works for all of them. A harness is supported only if it can.
@@ -29,6 +30,9 @@ Every one of these can list the models it offers, using its own command, so
 - `fx` runs `fx ask --auto`, which lets fx review its own permission prompts
   (there is no terminal to ask). Models come from `fx models --json`, which needs
   fx to be signed in.
+- `codex` runs `codex exec` with the `workspace-write` sandbox, so it can edit
+  files in the workspace but nothing outside it. Models come from
+  `codex debug models` (those Codex shows in its own picker).
 
 ## Any Other CLI
 

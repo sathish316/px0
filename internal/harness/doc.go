@@ -1,5 +1,5 @@
 // Package harness detects coding-agent CLIs installed on this machine (claude,
-// cursor-agent, agy, opencode, fx) and runs them headless with a prompt.
+// cursor-agent, agy, opencode, fx, codex) and runs them headless with a prompt.
 //
 // Typical use: detect what is installed, pick a harness and model, resolve
 // them into a command, then run it.

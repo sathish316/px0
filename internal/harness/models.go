@@ -29,6 +29,7 @@ var listers = map[string]lister{
 	"agy":          {[]string{"models"}, parseAgyModels},
 	"opencode":     {[]string{"models"}, parseOpencodeModels},
 	"fx":           {[]string{"models", "--json"}, parseFxModels},
+	"codex":        {[]string{"debug", "models"}, parseCodexModels},
 }
 
 // Successful lookups are cached for the life of the process, because asking a
@@ -185,6 +186,32 @@ func parseFxModels(s string) []string {
 			list = append(list, id)
 		} else if json.Unmarshal(raw, &obj) == nil && obj.ID != "" {
 			list = append(list, obj.ID)
+		}
+	}
+	return list
+}
+
+// parseCodexModels reads the catalog `codex debug models` prints as JSON and
+// keeps the models Codex itself lists in its picker (visibility "list"), in
+// catalog order. Anything printed before the JSON object is ignored.
+func parseCodexModels(s string) []string {
+	start := strings.Index(s, "{")
+	if start < 0 {
+		return nil
+	}
+	var doc struct {
+		Models []struct {
+			Slug       string `json:"slug"`
+			Visibility string `json:"visibility"`
+		} `json:"models"`
+	}
+	if err := json.NewDecoder(strings.NewReader(s[start:])).Decode(&doc); err != nil {
+		return nil
+	}
+	var list []string
+	for _, m := range doc.Models {
+		if m.Slug != "" && (m.Visibility == "" || m.Visibility == "list") {
+			list = append(list, m.Slug)
 		}
 	}
 	return list

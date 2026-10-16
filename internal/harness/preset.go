@@ -54,6 +54,13 @@ var presets = []Preset{
 		Args:      []string{"fx", "ask", "--auto", "--", Placeholder},
 		ModelFlag: "--model",
 	},
+	{
+		// exec never asks for approval, so workspace-write is what lets it edit files.
+		// "--" ends flag parsing so a prompt that starts with "-" stays a prompt.
+		Name:      "codex",
+		Args:      []string{"codex", "exec", "--sandbox", "workspace-write", "--skip-git-repo-check", "--", Placeholder},
+		ModelFlag: "-m",
+	},
 }
 
 // Presets returns a copy of the built-in presets, in picker order.

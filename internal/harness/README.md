@@ -1,6 +1,6 @@
 # Harness
 
-Detect coding-agent CLIs (claude, cursor-agent, agy, opencode, fx) installed on this
+Detect coding-agent CLIs (claude, cursor-agent, agy, opencode, fx, codex) installed on this
 machine and run them headless.
 
 ```sh
@@ -21,7 +21,7 @@ res := harness.Run(ctx, cmd, "rename foo to bar", harness.Options{Dir: repo})
 fmt.Println(res.Stdout, res.Err)
 ```
 
-Built-in: claude, cursor-agent, agy, opencode, fx
+Built-in: claude, cursor-agent, agy, opencode, fx, codex
 ([details](docs/harnesses.md)).
 Any other CLI works with a template like `mytool --task {prompt}`.
 
