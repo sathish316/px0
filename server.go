@@ -694,7 +694,8 @@ func staticContentType(p string) string {
 var (
 	vendorFetchMu sync.Mutex
 	vendorCDNs    = map[string]string{
-		"vendor/mermaid-12.0.0.min.js": "https://cdn.jsdelivr.net/npm/mermaid@12.0.0/dist/mermaid.min.js",
+		"vendor/mermaid-12.0.0.min.js":       "https://cdn.jsdelivr.net/npm/mermaid@12.0.0/dist/mermaid.min.js",
+		"vendor/three-0.170.0.module.min.js": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js",
 	}
 )
 
