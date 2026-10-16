@@ -123,6 +123,7 @@ function toggleControlsMenu() {
   closeMenus();
   const items = [
     { label: loading ? 'Refreshing…' : 'Refresh', desc: 'Rebuild from the code as it is now', disabled: loading, run: () => loadVisualizer(true) },
+    { sep: true },
     ...(instance?.menu?.() || []),
     { sep: true },
     { label: 'Back to editor', run: closeVisualizer },
@@ -179,7 +180,7 @@ export async function openVisualizer(id) {
   const stage = $('#viz-stage');
   stage.replaceChildren();
   lastResult = null;
-  instance = def.mount(stage, { refresh: () => loadVisualizer(true), setStatus });
+  instance = def.mount(stage, { refresh: () => loadVisualizer(true), close: closeVisualizer, setStatus });
   stage.focus({ preventScroll: true });
   await loadVisualizer(false);
 }
