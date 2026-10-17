@@ -38,9 +38,18 @@ function cityMount(stage, env) {
   host.innerHTML = `
     <canvas class="cc-canvas"></canvas>
     <div class="cc-labels"></div>
+    <div class="cc-tools">
+      <button type="button" class="cc-tool cc-hand" title="Hand tool: drag to move around (hold Shift or right-drag for the same)" aria-label="Hand tool" aria-pressed="false">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a2 2 0 0 0-4 0v1M14 10V4a2 2 0 0 0-4 0v6M10 10.5V6a2 2 0 0 0-4 0v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.9-5.9-2.4L3.4 16a2 2 0 0 1 3.2-2.4L8 15"/></svg>
+      </button>
+    </div>
     <div class="cc-search"><input type="search" placeholder="Find building or district…" spellcheck="false" aria-label="Find in city"></div>
     <aside class="cc-panel"></aside>
     <div class="cc-legend"></div>
+    <div class="cc-zoom">
+      <button type="button" class="cc-tool cc-zoom-in" title="Zoom in (+)" aria-label="Zoom in">+</button>
+      <button type="button" class="cc-tool cc-zoom-out" title="Zoom out (-)" aria-label="Zoom out">−</button>
+    </div>
     <div class="viz-empty cc-msg">Building city…</div>`;
   stage.appendChild(host);
   const canvas = host.querySelector('.cc-canvas');
@@ -49,12 +58,22 @@ function cityMount(stage, env) {
   const legend = host.querySelector('.cc-legend');
   const msg = host.querySelector('.cc-msg');
   const search = host.querySelector('input');
+  const handBtn = host.querySelector('.cc-hand');
+  const setHand = on => {
+    handTool = on;
+    handBtn.setAttribute('aria-pressed', String(on));
+    host.classList.toggle('cc-hand-on', on);
+  };
+  handBtn.addEventListener('click', () => setHand(!handTool));
+  host.querySelector('.cc-zoom-in').addEventListener('click', () => zoom(0.7));
+  host.querySelector('.cc-zoom-out').addEventListener('click', () => zoom(1 / 0.7));
 
   let T = null;           // three namespace
   let destroyed = false;
   let city = null;
   let mode = 'metrics';
   let showLabels = true;
+  let handTool = false;
   let selected = null;
   let raf = 0;
   const keys = new Set();
@@ -196,7 +215,7 @@ function cityMount(stage, env) {
       panel.innerHTML = `<h3>${esc(city.name)}</h3>
         <div class="cc-kv"><span>Buildings</span><b>${st.buildings}</b><span>Districts</span><b>${st.districts}</b><span>LOC</span><b>${st.loc}</b></div>
         <p class="cc-dim">${esc(langs)}</p>
-        <p class="cc-dim">Click a building or district. Drag to orbit, right-drag to pan, scroll or +/- to zoom, WASD to fly, Q/E for height, F to focus, Esc to clear.</p>`;
+        <p class="cc-dim">Click a building or district. Drag to orbit, hand tool (H) or right-drag to pan, pinch or scroll to zoom, +/- buttons to zoom, WASD to fly, Q/E for height, F to focus, Esc to clear.</p>`;
       return;
     }
     const m = n.metrics || {};
@@ -237,32 +256,64 @@ function cityMount(stage, env) {
     return (hit.object === buildingMesh ? nodes.building : nodes.district)[hit.instanceId];
   }
 
-  let drag = null;
+  // Pointers: one finger/button drags (orbit, or pan with the hand tool, right
+  // button or Shift); two fingers pinch to zoom and pan together.
+  const pointers = new Map();
+  let drag = null, pinch = null;
+  const pinchState = () => {
+    const [a, b] = [...pointers.values()];
+    return { d: Math.hypot(a.x - b.x, a.y - b.y) || 1, x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+  };
+  function panBy(dx, dy) {
+    const k = cam.dist * 0.0016;
+    const fwd = new T.Vector3(); camera.getWorldDirection(fwd); fwd.y = 0; fwd.normalize();
+    const right = new T.Vector3().crossVectors(fwd, new T.Vector3(0, 1, 0));
+    cam.target.addScaledVector(right, -dx * k).addScaledVector(fwd, dy * k);
+  }
   canvas.addEventListener('pointerdown', e => {
     canvas.setPointerCapture(e.pointerId);
-    drag = { x: e.clientX, y: e.clientY, moved: 0, pan: e.button === 2 || e.shiftKey };
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     stage.focus({ preventScroll: true });
+    if (pointers.size === 2) { pinch = pinchState(); drag = null; return; }
+    drag = { x: e.clientX, y: e.clientY, moved: 0, pan: handTool || e.button === 2 || e.shiftKey };
+    host.classList.toggle('cc-grabbing', drag.pan);
   });
   canvas.addEventListener('pointermove', e => {
+    const p = pointers.get(e.pointerId);
+    if (p) { p.x = e.clientX; p.y = e.clientY; }
+    if (pinch && pointers.size >= 2) {
+      const n = pinchState();
+      zoom(pinch.d / n.d);
+      panBy(n.x - pinch.x, n.y - pinch.y);
+      pinch = n;
+      return;
+    }
     if (!drag) return;
     const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
     drag.x = e.clientX; drag.y = e.clientY; drag.moved += Math.abs(dx) + Math.abs(dy);
-    if (drag.pan) {
-      const k = cam.dist * 0.0016;
-      const fwd = new T.Vector3(); camera.getWorldDirection(fwd); fwd.y = 0; fwd.normalize();
-      const right = new T.Vector3().crossVectors(fwd, new T.Vector3(0, 1, 0));
-      cam.target.addScaledVector(right, -dx * k).addScaledVector(fwd, dy * k);
-    } else {
+    if (drag.pan) panBy(dx, dy);
+    else {
       cam.theta -= dx * 0.006;
       cam.phi = Math.min(1.5, Math.max(0.08, cam.phi - dy * 0.006));
     }
   });
-  canvas.addEventListener('pointerup', e => {
-    if (drag && drag.moved < 4 && e.button === 0) select(pick(e));
+  const endPointer = e => {
+    pointers.delete(e.pointerId);
+    if (pointers.size < 2) pinch = null;
+    if (e.type === 'pointerup' && drag && drag.moved < 4 && e.button === 0) select(pick(e));
     drag = null;
-  });
+    host.classList.remove('cc-grabbing');
+  };
+  canvas.addEventListener('pointerup', endPointer);
+  canvas.addEventListener('pointercancel', endPointer);
   canvas.addEventListener('contextmenu', e => e.preventDefault());
-  canvas.addEventListener('wheel', e => { e.preventDefault(); zoom(Math.exp(e.deltaY * 0.0012)); }, { passive: false });
+  // A trackpad pinch arrives as ctrl+wheel with small deltas, so it needs a
+  // much larger gain than a mouse wheel or two-finger scroll.
+  canvas.addEventListener('wheel', e => {
+    e.preventDefault();
+    const dy = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY;
+    zoom(Math.exp(dy * (e.ctrlKey ? 0.012 : 0.0028)));
+  }, { passive: false });
   function zoom(f) { cam.dist = Math.min(maxDist, Math.max(4, cam.dist * f)); }
 
   stage.addEventListener('keydown', e => {
@@ -278,6 +329,7 @@ function cityMount(stage, env) {
     const k = e.key.toLowerCase();
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     if (k === 'escape') select(null);
+    else if (k === 'h') setHand(!handTool);
     else if (k === 'f' && selected) focus(selected);
     else if (k === '+' || k === '=') zoom(0.8);
     else if (k === '-') zoom(1.25);

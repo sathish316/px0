@@ -3076,7 +3076,7 @@ body.viz-active #tabs, body.viz-active #view-switches, body.viz-active #editor {
   position: absolute; background: var(--bg2); border: 1px solid var(--line); border-radius: var(--r-lg);
   box-shadow: var(--shadow-sm); font-size: 12px; color: var(--dim);
 }
-.cc-panel { top: 10px; right: 10px; width: 270px; max-height: calc(100% - 20px); overflow: auto; padding: 10px 12px; }
+.cc-panel { top: 10px; right: 10px; width: 270px; max-height: calc(100% - 90px); overflow: auto; padding: 10px 12px; }
 .cc-panel h3 { margin: 0 0 4px; font-size: 13.5px; color: var(--fg); word-break: break-all; }
 .cc-path { font-family: var(--mono); font-size: 10.5px; color: var(--accent-fg); word-break: break-all; }
 .cc-kv { display: grid; grid-template-columns: 90px 1fr; gap: 3px 8px; margin: 8px 0; }
@@ -3092,3 +3092,14 @@ body.viz-active #tabs, body.viz-active #view-switches, body.viz-active #editor {
 .cc-legend i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin: 0 4px 0 6px; vertical-align: -1px; }
 .cc-legend i:first-of-type { margin-left: 0; }
 .viz-empty[hidden] { display: none; }
+.cc-tools { position: absolute; top: 10px; left: 240px; }
+.cc-tool {
+  display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0;
+  font-size: 16px; line-height: 1; color: var(--fg); background: var(--bg2); border: 1px solid var(--line);
+  border-radius: var(--r-lg); cursor: pointer;
+}
+.cc-tool:hover { border-color: var(--accent); }
+.cc-tool[aria-pressed="true"] { color: var(--on-accent); background: var(--accent); border-color: var(--accent); }
+.cc-zoom { position: absolute; right: 10px; bottom: 10px; display: flex; flex-direction: column; gap: 4px; }
+.cc-hand-on .cc-canvas { cursor: grab; }
+.cc-grabbing .cc-canvas { cursor: grabbing; }

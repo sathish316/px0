@@ -26,6 +26,6 @@ Directories become districts and files become buildings (after Richard Wettel's 
 
 Method and field counts are regex heuristics, so treat them as approximate. Disharmony coloring (god, brain, data class, antenna) marks candidates; generated code is a common false positive.
 
-Controls: drag to orbit, right-drag or Shift-drag to pan, scroll or `+`/`-` to zoom, `W A S D` to fly, `Q`/`E` for height, `F` to focus the selection, `Esc` to clear it. Click a building to inspect it, and use **Open in editor** to jump to the file. The Controls menu switches between size and disharmony coloring, overview and street camera, and district labels.
+Controls: drag to orbit; pan with the hand button (or `H`), right-drag or Shift-drag; pinch (trackpad or touch), scroll, `+`/`-` or the Zoom buttons at the bottom right to zoom; `W A S D` to fly, `Q`/`E` for height, `F` to focus the selection, `Esc` to clear it. Click a building to inspect it, and use **Open in editor** to jump to the file. The Controls menu switches between size and disharmony coloring, overview and street camera, and district labels.
 
 The 3D engine (three.js) is downloaded once on first use and cached, like the Mermaid renderer.
