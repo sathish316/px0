@@ -40,6 +40,22 @@
         <button id="prg-next" class="footer-btn" disabled>Next &#9654;</button>
       </div>
     </div>
+    <!-- CommitGrok commit list (web/src/commitgrok.js); replaces the explorer while CommitGrok is open -->
+    <div id="commitgrok-panel" class="prg-panel" hidden>
+      <div class="prg-panel-head">
+        <span id="cg-repo" class="prg-repo"></span>
+        <button id="cg-refresh" class="mini" title="Reload commits" aria-label="Reload commits">&#8635;</button>
+      </div>
+      <div class="cg-branch-row">
+        <select id="cg-branch" class="prg-select cg-branch" title="Branch" aria-label="Branch"></select>
+      </div>
+      <div id="cg-list" class="prg-list"></div>
+      <div class="prg-pager">
+        <button id="cg-prev" class="footer-btn" disabled>&#9664; Prev</button>
+        <span id="cg-page" class="prg-page"></span>
+        <button id="cg-next" class="footer-btn" disabled>Next &#9654;</button>
+      </div>
+    </div>
     <!-- Unpushed commits: the local commits ahead of the tracking branch,
          listed beside the tree while the "changed files only" filter is on.
          web/src/unpushed.js owns it. -->
@@ -237,58 +253,11 @@
       <div id="viz-stage" class="viz-stage" tabindex="-1"></div>
     </section>
 
-    <!-- PRGrok: replaces the tabs and editor with an explained pull request (web/src/prgrok.js) -->
-    <section id="prgrokview" hidden>
-      <div class="prg-bar">
-        <div class="prg-row">
-          <span id="prg-title" class="prg-title">PRGrok</span>
-          <span id="prg-status" class="prg-status"></span>
-          <button id="prg-thread" class="prg-btn" hidden title="Watch the agent work in the Agent bar">Show thread</button>
-          <button id="prg-cancel" class="prg-btn" hidden>Cancel</button>
-          <button id="prg-close" class="prg-btn" title="Back to the editor">Back to editor</button>
-        </div>
-        <div class="prg-row" id="prg-controls" hidden>
-          <label class="prg-field">View
-            <select id="prg-scope" class="prg-select" title="Show the entire PR, or one file at a time">
-              <option value="pr">Entire PR</option>
-              <option value="file">One file at a time</option>
-            </select>
-          </label>
-          <select id="prg-file" class="prg-select prg-file-select" title="File" hidden></select>
-          <select id="prg-layout" class="prg-select" title="Diff layout">
-            <option value="split">Side by side</option>
-            <option value="unified">Unified</option>
-          </select>
-          <span class="prg-sep"></span>
-          <button id="prg-diff" class="prg-btn prg-mode" data-mode="diff" title="Plain diff">Diff</button>
-          <button id="prg-explain" class="prg-btn prg-mode" data-mode="explain" title="Explain every hunk: what changed and why">Explain Hunks</button>
-          <button id="prg-visual" class="prg-btn prg-mode" data-mode="visual" title="Explain with diagrams">Explain visually</button>
-          <button id="prg-narrate" class="prg-btn" title="Turn the explanation into spoken talking points">Narrate</button>
-          <button id="prg-regen" class="prg-btn" title="Run the agent again for this view" disabled>&#8635; Regenerate</button>
-          <span id="prg-agent" class="prg-agent" title="Coding harness and model used for Explain and Narrate (the same selection as the Agent bar)">
-            <select id="prg-harness" class="agent-harness-select" title="Coding harness"></select>
-            <select id="prg-model" class="agent-model-select" title="Model"></select>
-          </span>
-        </div>
-        <div class="prg-row prg-voice" id="prg-voice" hidden>
-          <label class="prg-field">Minutes <input id="prg-minutes" class="prg-num" type="number" min="1" max="30" value="3"></label>
-          <select id="prg-locale" class="prg-select" title="Accent"></select>
-          <select id="prg-gender" class="prg-select" title="Voice gender"></select>
-          <select id="prg-voice-id" class="prg-select" title="Kokoro voice"></select>
-          <label class="prg-field">Speed <input id="prg-rate" class="prg-num" type="number" min="0.5" max="2" step="0.1" value="1"></label>
-          <button id="prg-dl" class="prg-btn" title="Download the Kokoro voice model (about 80 MB, cached by the browser)">Download</button>
-          <button id="prg-try" class="prg-btn" title="Play a sample" disabled>Try</button>
-          <span class="prg-sep"></span>
-          <button id="prg-prevs" class="prg-btn" title="Previous talking point" disabled>&#9198;</button>
-          <button id="prg-play" class="prg-btn" title="Play" disabled>&#9654;</button>
-          <button id="prg-pause" class="prg-btn" title="Pause" disabled>&#10074;&#10074;</button>
-          <button id="prg-nexts" class="prg-btn" title="Next talking point" disabled>&#9197;</button>
-          <button id="prg-stops" class="prg-btn" title="Stop" disabled>&#9209;</button>
-          <span id="prg-voice-status" class="prg-status"></span>
-        </div>
-      </div>
-      <div id="prg-stage" class="prg-stage" tabindex="-1"></div>
-    </section>
+    <!-- PRGrok: replaces the tabs and editor with an explained pull request. The toolbar and stage are built by web/src/grokview.js -->
+    <section id="prgrokview" hidden></section>
+
+    <!-- CommitGrok: the same explained-diff view for a local commit (web/src/commitgrok.js) -->
+    <section id="commitgrokview" hidden></section>
 
     <!-- Virtualized Code Editor Viewport -->
     <div id="editor">

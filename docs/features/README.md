@@ -24,6 +24,7 @@ This directory provides comprehensive documentation for all px0 user-facing feat
 | **Image Viewer & Assets** | Click image file / lightbox | Standalone image tabs, zoom/pan transforms, and markdown lightbox | [Image Viewer](image-viewer.md) |
 | **Visualizations** | Skyscraper button, sidebar footer | Swap the editor for a visualizer of the checked-out branch; today CodeCity, a 3D city of the repo built with no LLM or agent | [Visualizations](visualizations.md) |
 | **PRGrok** | PR button, sidebar footer | Browse the project's GitHub or Bitbucket pull requests and explain one hunk by hunk, with diagrams and a spoken walkthrough, using the coding harness from the Agent bar | [PRGrok](prgrok.md) |
+| **CommitGrok** | Commit button, sidebar footer | Browse the local git history of a branch, with the merge graph, and explain one commit the same way PRGrok explains a PR | [CommitGrok](commitgrok.md) |
 | **Settings & Preferences** | `Cmd/Ctrl+,` | Graphical form editor, raw JSON sync, and instant live preview | [Settings & Configuration](settings-and-configuration.md) |
 | **Syntax Highlighting** | Automatic | Viewport-windowed Chroma lexing for ~280 languages | [Syntax Highlighting](syntax-highlighting.md) |
 | **Themes & Styling** | Settings / Palette | 14 built-in dark and light themes powered by CSS tokens | [Themes & Styling](themes-and-styling.md) |

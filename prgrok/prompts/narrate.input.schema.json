@@ -4,7 +4,7 @@
   "type": "object",
   "required": ["kind", "source", "minutes", "budget_words", "sections"],
   "properties": {
-    "kind": { "const": "pull request" },
+    "kind": { "enum": ["pull request", "commit"] },
     "source": { "enum": ["explain", "visual"], "description": "which result the sections come from" },
     "minutes": { "type": "integer", "minimum": 1 },
     "budget_words": { "type": "integer", "description": "minutes * 130" },

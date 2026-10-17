@@ -11,21 +11,30 @@
   ],
   "properties": {
     "kind": {
-      "const": "pull request"
+      "enum": ["pull request", "commit"]
     },
     "repo": {
       "type": "string",
       "description": "owner/repo or workspace/repo"
     },
     "number": {
-      "type": "integer"
+      "type": "integer",
+      "description": "pull request number (kind = pull request)"
+    },
+    "ref": {
+      "type": "string",
+      "description": "full commit sha (kind = commit)"
+    },
+    "author": {
+      "type": "string",
+      "description": "commit author (kind = commit)"
     },
     "title": {
       "type": "string"
     },
     "description": {
       "type": "string",
-      "description": "PR body, may be empty"
+      "description": "PR body or commit message body, may be empty"
     },
     "limits": {
       "type": "object",

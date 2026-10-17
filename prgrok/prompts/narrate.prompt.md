@@ -1,5 +1,5 @@
 You are producing a short **spoken script** ("talking points") for a
-Twitch-style live code review of a pull request. Below are the already-written
+Twitch-style live code review of a pull request or commit (see `kind` in the input). Below are the already-written
 **{{source}}** sections. Rewrite EACH into a brief, natural, first-person spoken
 talking point, like a streamer walking a viewer through the change. You are
 answering in ONE shot. Do not read or modify any file except the output file named below.

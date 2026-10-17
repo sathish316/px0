@@ -109,6 +109,12 @@ func (s *Server) registerRoutes() {
 	s.mux.HandleFunc(s.routePath("/api/prgrok/result"), s.handlePRGrokResult)
 	s.mux.HandleFunc(s.routePath("/api/prgrok/run"), s.handlePRGrokRun)
 	s.mux.HandleFunc(s.routePath("/api/prgrok/job"), s.handlePRGrokJob)
+	s.mux.HandleFunc(s.routePath("/api/commitgrok/info"), s.handleCommitGrokInfo)
+	s.mux.HandleFunc(s.routePath("/api/commitgrok/log"), s.handleCommitGrokLog)
+	s.mux.HandleFunc(s.routePath("/api/commitgrok/commit"), s.handleCommitGrokCommit)
+	s.mux.HandleFunc(s.routePath("/api/commitgrok/result"), s.handleCommitGrokResult)
+	s.mux.HandleFunc(s.routePath("/api/commitgrok/run"), s.handleCommitGrokRun)
+	s.mux.HandleFunc(s.routePath("/api/commitgrok/job"), s.handlePRGrokJob)
 	if devWebDir != "" {
 		s.mux.HandleFunc(s.routePath("/api/dev/stamp"), s.handleDevStamp)
 	}

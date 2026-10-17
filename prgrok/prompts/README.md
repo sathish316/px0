@@ -56,6 +56,20 @@ All PRGrok data lives under `~/.px0/cache/data/prgrok/` (or
   Regenerate button (or deleting the file) forces a new run.
 - The key includes the PR head commit, so a force-push gets fresh results.
 
+## CommitGrok shares these prompts
+
+CommitGrok (commitgrok.go) runs the same three actions on one commit, with
+`kind: "commit"`, `ref` (the full sha) and `author` in the input instead of
+`number`. Its results live apart, keyed by the immutable sha:
+
+```
+~/.px0/cache/data/commitgrok/<repo>/<full sha>/<action>[.<source>.<n>min].json
+```
+
+A merge commit is explained against its first parent. A new subject (a code
+file, say) only has to build a `grokSubject` in Go (kind, header fields, files
+and hunks, cache path) and reuse `grokResult`/`grokRun`; the prompts need no change.
+
 ## Always the whole PR
 
 Every action covers the **entire PR**, whatever the view (entire PR or one file

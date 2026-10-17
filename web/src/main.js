@@ -31,6 +31,7 @@ import { initUnpushed, refreshUnpushed } from './unpushed.js';
 import { initPRScope } from './prscope.js';
 import { initViz } from './viz.js';
 import { initPRGrok } from './prgrok.js';
+import { initCommitGrok } from './commitgrok.js';
 
 // Initialize all subsystems
 initRenderer();
@@ -63,6 +64,7 @@ initUnpushed();
 initPRScope();
 initViz();
 initPRGrok();
+initCommitGrok();
 
 // Bootstrap application lifecycle
 (async function boot() {

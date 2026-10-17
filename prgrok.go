@@ -631,7 +631,21 @@ func prgRenderPrompt(action string, input map[string]any, outputPath string) (st
 	).Replace(tmpl), nil
 }
 
+func prgInputBase(r prgRepo, meta *prgPRMeta) map[string]any {
+	return map[string]any{
+		"kind": "pull request", "repo": r.slug(), "number": meta.Number,
+		"title": meta.Title, "description": meta.Body,
+	}
+}
+
 func prgInputFor(r prgRepo, meta *prgPRMeta, files []prgFile) map[string]any {
+	return grokExplainInput(prgInputBase(r, meta), files)
+}
+
+// grokExplainInput completes a subject's header fields (kind, repo, title,
+// description, ...) with what every explain and visual run is given: the word
+// limits, the file/hunk outline and the annotated diff.
+func grokExplainInput(base map[string]any, files []prgFile) map[string]any {
 	outline := make([]map[string]any, 0, len(files))
 	for _, f := range files {
 		hs := make([]map[string]string, 0, len(f.Hunks))
@@ -643,11 +657,11 @@ func prgInputFor(r prgRepo, meta *prgPRMeta, files []prgFile) map[string]any {
 			"additions": f.Additions, "deletions": f.Deletions, "hunks": hs,
 		})
 	}
-	return map[string]any{
-		"kind": "pull request", "repo": r.slug(), "number": meta.Number,
-		"title": meta.Title, "description": meta.Body,
-		"limits": prgLimits, "files": outline, "diff": prgAnnotate(files),
+	in := map[string]any{"limits": prgLimits, "files": outline, "diff": prgAnnotate(files)}
+	for k, v := range base {
+		in[k] = v
 	}
+	return in
 }
 
 // ---------------------------------------------------------------- results
@@ -692,6 +706,7 @@ type prgResult struct {
 	Action   string        `json:"action"`
 	Source   string        `json:"source,omitempty"` // narrate: explain or visual
 	Number   int           `json:"number"`
+	Ref      string        `json:"ref,omitempty"` // CommitGrok: the commit
 	Harness  string        `json:"harness"`
 	Model    string        `json:"model,omitempty"`
 	At       string        `json:"cachedAt"`
@@ -943,6 +958,15 @@ func prgSafe(s string) string {
 // saved result (the result records which harness wrote it). Regenerate replaces
 // it. Narration also depends on what it narrates and its length.
 func (s *Server) prgPath(repo prgRepo, head string, q prgRequest) string {
+	if len(head) > 8 {
+		head = head[:8]
+	}
+	return filepath.Join(prgDataDir(), prgSafe(repo.slug()), "pr-"+strconv.Itoa(q.Number), prgSafe(head), grokResultName(q))
+}
+
+// grokResultName is the file name of a request's result inside its subject's
+// directory: the action, and for narration what it narrates and how long.
+func grokResultName(q prgRequest) string {
 	name := []string{q.Action}
 	if q.Action == "narrate" {
 		name = append(name, q.Source, strconv.Itoa(q.Minutes)+"min")
@@ -950,10 +974,7 @@ func (s *Server) prgPath(repo prgRepo, head string, q prgRequest) string {
 	for i := range name {
 		name[i] = prgSafe(name[i])
 	}
-	if len(head) > 8 {
-		head = head[:8]
-	}
-	return filepath.Join(prgDataDir(), prgSafe(repo.slug()), "pr-"+strconv.Itoa(q.Number), prgSafe(head), strings.Join(name, ".")+".json")
+	return strings.Join(name, ".") + ".json"
 }
 
 // prgWorkDirName is the directory, inside the project, where the agent writes
@@ -963,7 +984,14 @@ func (s *Server) prgPath(repo prgRepo, head string, q prgRequest) string {
 const prgWorkDirName = ".px0-prgrok"
 
 func prgOutputPath(root string, q prgRequest) string {
-	name := fmt.Sprintf("%s-pr%d-%d.json", q.Action, q.Number, time.Now().UnixNano())
+	tag := "pr" + strconv.Itoa(q.Number)
+	if q.Ref != "" {
+		tag = prgSafe(q.Ref)
+		if len(tag) > 12 {
+			tag = tag[:12]
+		}
+	}
+	name := fmt.Sprintf("%s-%s-%d.json", q.Action, tag, time.Now().UnixNano())
 	return filepath.Join(root, prgWorkDirName, name)
 }
 
@@ -1000,7 +1028,8 @@ func prgCacheWrite(path string, r *prgResult) {
 // ---------------------------------------------------------------- HTTP
 
 type prgRequest struct {
-	Number  int    `json:"number"`
+	Number  int    `json:"number"`  // PRGrok: the pull request
+	Ref     string `json:"ref"`     // CommitGrok: the full commit sha
 	Action  string `json:"action"`  // explain, visual, narrate. Always the whole PR.
 	Source  string `json:"source"`  // narrate: explain or visual
 	Minutes int    `json:"minutes"` // narrate
@@ -1113,6 +1142,12 @@ func prgValidRequest(q *prgRequest) error {
 	if q.Number <= 0 {
 		return errors.New("number is required")
 	}
+	return grokValidAction(q)
+}
+
+// grokValidAction checks the part of a request every Grok shares: the action and
+// its narration options. Which subject it is about is the caller's business.
+func grokValidAction(q *prgRequest) error {
 	switch q.Action {
 	case "explain", "visual", "narrate":
 	default:
@@ -1134,26 +1169,71 @@ func prgValidRequest(q *prgRequest) error {
 	return nil
 }
 
+// grokSubject is what one AI action explains: a pull request, a commit, and
+// later a code file. Everything below the resolver (diff model, prompts,
+// validation, cache, thread, job) is shared by every subject.
+type grokSubject struct {
+	Kind  string // "pull request", "commit": sent to the prompts as input.kind
+	Tool  string // "PRGrok", "CommitGrok": names the agent thread
+	Label string // "#42", "a1b2c3d": names the agent thread
+	Title string
+	Base  map[string]any          // header fields of the prompt input
+	Files []prgFile               // what the agent is shown; ids are the contract
+	Cache func(prgRequest) string // the saved result's path for a request
+}
+
+// grokResolver finds the subject a request is about. On failure it returns the
+// HTTP status to answer with.
+type grokResolver func(ctx context.Context, q prgRequest) (*grokSubject, int, error)
+
+func grokQuery(r *http.Request) prgRequest {
+	qs := r.URL.Query()
+	q := prgRequest{Action: qs.Get("action"), Source: qs.Get("source"), Ref: qs.Get("ref")}
+	q.Number, _ = strconv.Atoi(qs.Get("number"))
+	q.Minutes, _ = strconv.Atoi(qs.Get("minutes"))
+	return q
+}
+
+func (s *Server) prSubject(root string, repo prgRepo) grokResolver {
+	return func(ctx context.Context, q prgRequest) (*grokSubject, int, error) {
+		if q.Number <= 0 {
+			return nil, http.StatusBadRequest, errors.New("number is required")
+		}
+		meta, diff, err := prgFetchPR(ctx, root, repo, q.Number)
+		if err != nil {
+			return nil, http.StatusBadGateway, err
+		}
+		files := prgParseDiff(diff)
+		return &grokSubject{
+			Kind: "pull request", Tool: "PRGrok", Label: fmt.Sprintf("#%d", q.Number), Title: meta.Title,
+			Base:  prgInputBase(repo, meta),
+			Files: files,
+			Cache: func(r prgRequest) string { return s.prgPath(repo, meta.Head, r) },
+		}, 0, nil
+	}
+}
+
 // handlePRGrokResult peeks at the saved result without running anything.
 func (s *Server) handlePRGrokResult(w http.ResponseWriter, r *http.Request) {
 	root, repo, ok := s.prgContext(w)
 	if !ok {
 		return
 	}
-	qs := r.URL.Query()
-	q := prgRequest{Action: qs.Get("action"), Source: qs.Get("source")}
-	q.Number, _ = strconv.Atoi(qs.Get("number"))
-	q.Minutes, _ = strconv.Atoi(qs.Get("minutes"))
-	if err := prgValidRequest(&q); err != nil {
+	s.grokResult(w, r, s.prSubject(root, repo))
+}
+
+func (s *Server) grokResult(w http.ResponseWriter, r *http.Request, resolve grokResolver) {
+	q := grokQuery(r)
+	if err := grokValidAction(&q); err != nil {
 		fail(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	meta, _, err := prgFetchPR(r.Context(), root, repo, q.Number)
+	subj, status, err := resolve(r.Context(), q)
 	if err != nil {
-		fail(w, http.StatusBadGateway, err.Error())
+		fail(w, status, err.Error())
 		return
 	}
-	if res := prgCacheRead(s.prgPath(repo, meta.Head, q)); res != nil {
+	if res := prgCacheRead(subj.Cache(q)); res != nil {
 		writeJSON(w, map[string]any{"cached": true, "result": res})
 		return
 	}
@@ -1171,26 +1251,32 @@ func (s *Server) handlePRGrokRun(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	s.grokRun(w, r, root, s.prSubject(root, repo))
+}
+
+// grokRun starts one AI action for the whole subject as a thread, or answers from
+// its saved result.
+func (s *Server) grokRun(w http.ResponseWriter, r *http.Request, root string, resolve grokResolver) {
 	var q prgRequest
 	if err := json.NewDecoder(io.LimitReader(r.Body, 1<<16)).Decode(&q); err != nil {
 		fail(w, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
-	if err := prgValidRequest(&q); err != nil {
+	if err := grokValidAction(&q); err != nil {
 		fail(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	if s.agent == nil || s.threads == nil || s.agent.Name() == "" {
-		fail(w, http.StatusServiceUnavailable, "no coding harness is selected: pick one in the PRGrok bar or the Agent bar")
+		fail(w, http.StatusServiceUnavailable, "no coding harness is selected: pick one in the Grok bar or the Agent bar")
 		return
 	}
-	meta, diff, err := prgFetchPR(r.Context(), root, repo, q.Number)
+	subj, status, err := resolve(r.Context(), q)
 	if err != nil {
-		fail(w, http.StatusBadGateway, err.Error())
+		fail(w, status, err.Error())
 		return
 	}
-	files := prgParseDiff(diff)
-	cache := s.prgPath(repo, meta.Head, q)
+	files := subj.Files
+	cache := subj.Cache(q)
 	if !q.Refresh {
 		if res := prgCacheRead(cache); res != nil {
 			writeJSON(w, map[string]any{"cached": true, "result": res})
@@ -1201,7 +1287,7 @@ func (s *Server) handlePRGrokRun(w http.ResponseWriter, r *http.Request) {
 	var input map[string]any
 	var sections []prgSection
 	if q.Action == "narrate" {
-		src := prgCacheRead(s.prgPath(repo, meta.Head, prgRequest{Number: q.Number, Action: q.Source}))
+		src := prgCacheRead(subj.Cache(prgRequest{Number: q.Number, Ref: q.Ref, Action: q.Source}))
 		if src == nil {
 			fail(w, http.StatusConflict, "Run Explain Hunks or Explain visually first: there is nothing to narrate yet.")
 			return
@@ -1212,11 +1298,11 @@ func (s *Server) handlePRGrokRun(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		input = map[string]any{
-			"kind": "pull request", "source": q.Source, "minutes": q.Minutes,
+			"kind": subj.Kind, "source": q.Source, "minutes": q.Minutes,
 			"budget_words": q.Minutes * prgWordsPerMin, "sections": sections,
 		}
 	} else {
-		input = prgInputFor(repo, meta, files)
+		input = grokExplainInput(subj.Base, files)
 	}
 	pending := prgOutputPath(root, q)
 	if err := os.MkdirAll(filepath.Dir(pending), 0o755); err != nil {
@@ -1229,7 +1315,7 @@ func (s *Server) handlePRGrokRun(w http.ResponseWriter, r *http.Request) {
 		fail(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	title := fmt.Sprintf("PRGrok %s #%d: %s", map[string]string{"explain": "Explain Hunks", "visual": "Explain visually", "narrate": "Narrate"}[q.Action], q.Number, meta.Title)
+	title := fmt.Sprintf("%s %s %s: %s", subj.Tool, map[string]string{"explain": "Explain Hunks", "visual": "Explain visually", "narrate": "Narrate"}[q.Action], subj.Label, subj.Title)
 	t, err := s.threads.Create("", "", 0, 0, prompt, "", title)
 	if err != nil {
 		prgDiscard(pending)
@@ -1344,7 +1430,7 @@ func (s *Server) prgFinish(pj *prgJob, out prgOutcome) (*prgResult, string) {
 	if err != nil {
 		return nil, err.Error()
 	}
-	res.Action, res.Source, res.Number = pj.req.Action, pj.req.Source, pj.req.Number
+	res.Action, res.Source, res.Number, res.Ref = pj.req.Action, pj.req.Source, pj.req.Number, pj.req.Ref
 	res.Minutes = 0
 	if pj.req.Action == "narrate" {
 		res.Minutes = pj.req.Minutes
