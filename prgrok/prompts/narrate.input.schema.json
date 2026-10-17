@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PRGrok narrate input",
+  "type": "object",
+  "required": ["kind", "source", "minutes", "budget_words", "sections"],
+  "properties": {
+    "kind": { "const": "pull request" },
+    "source": { "enum": ["explain", "visual"], "description": "which result the sections come from" },
+    "minutes": { "type": "integer", "minimum": 1 },
+    "budget_words": { "type": "integer", "description": "minutes * 130" },
+    "sections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "kind", "label", "text"],
+        "properties": {
+          "id": { "type": "string", "examples": ["overall", "f0", "f0h1", "f0h1e0", "d0"] },
+          "kind": { "enum": ["overall", "file", "hunk", "element", "diagram"] },
+          "label": { "type": "string" },
+          "text": { "type": "string", "description": "the written explanation to condense" }
+        }
+      }
+    }
+  }
+}

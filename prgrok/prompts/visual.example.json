@@ -1,0 +1,34 @@
+{
+  "overall": "Moves session lookup from the request handler into a new `SessionStore`, so handlers no longer talk to Redis directly. This makes the cache swappable and lets the store be tested without a server.",
+  "files": [
+    {
+      "id": "f0",
+      "summary": "Introduces `SessionStore` and its Redis implementation, and the interface handlers depend on.",
+      "hunks": [
+        { "id": "f0h0", "summary": "Declares the `SessionStore` interface: `Get` and `Put`." }
+      ]
+    },
+    {
+      "id": "f1",
+      "summary": "The handler now takes a `SessionStore` instead of a Redis client.",
+      "hunks": [
+        { "id": "f1h0", "summary": "Replaces the direct `redis.Get` call with `store.Get`, so the handler no longer knows where sessions live." }
+      ]
+    }
+  ],
+  "diagrams": [
+    {
+      "type": "architecture",
+      "title": "Handler to session storage",
+      "before": "flowchart LR\n  H[Handler] --> R[(Redis)]",
+      "mermaid": "flowchart LR\n  H[Handler] --> S[SessionStore]\n  S --> R[(Redis)]\n  classDef added fill:#d1fae5,stroke:#16a34a\n  classDef changed fill:#fef3c7,stroke:#d97706\n  class S added\n  class H changed",
+      "explanation": "Before, the handler called Redis itself. Now it depends on `SessionStore` (green), and only that type knows about Redis, so the handler (amber) changed but its behavior did not."
+    },
+    {
+      "type": "sequence",
+      "title": "Loading a session",
+      "mermaid": "sequenceDiagram\n  participant H as Handler\n  participant S as SessionStore\n  participant R as Redis\n  H->>S: Get(id)\n  S->>R: GET session:id\n  R-->>S: bytes\n  S-->>H: Session",
+      "explanation": "The handler asks the store for a session; only the store talks to Redis and decodes the bytes."
+    }
+  ]
+}

@@ -72,6 +72,7 @@ The internal documentation is modularized into the following focused guides:
 - [Harness Editing & Agent Dispatch](agent-editing.md): The optional agent flow. Starting an edit from the selection bar, right-click menu or diff view, headless invocation contract for Claude Code / Gemini CLI / Cursor Agent, inline failure output, running several edits at once with an overlap guard and an uncommitted-work guard, change detection, the cache/language-server/tab reload path, and the file-free prompt dispatch (`StartPrompt`) behind the git panel's AI commit messages.
 - [Threads](threads.md): Long-running multi-turn conversations with a harness. Native session resume for `claude` and `cursor-agent` with transcript replay for the rest, the stream-json event parser, the SSE feed and its drop-slow-subscriber rule, the on-disk store beside `settings.json`, and why there is no overlap guard.
 - [Visualizations](visualizations.md): The `visualizers` registry and `/api/viz` contract, per-branch cache under the user cache dir with HEAD-based staleness, the CodeCity metric extractor and treemap packer in `internal/codecity`, and the browser host (`viz.js`) with its visualizer interface and lazily vendored three.js.
+- [PRGrok](prgrok.md): PR listing through `gh` and `twg`, diff parsing, the single-run action flow (input object, prompt template, agent-written output file, validation, cache under `~/.px0/cache/data/prgrok`), and the browser UI and Kokoro narration.
 
 ### Frontend & UI Subsystems
 

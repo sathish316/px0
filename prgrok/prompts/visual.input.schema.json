@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PRGrok visual input",
+  "description": "Same as explain.input.schema.json, with extra limits for diagrams.",
+  "allOf": [
+    { "$ref": "explain.input.schema.json" },
+    {
+      "type": "object",
+      "properties": {
+        "limits": {
+          "type": "object",
+          "required": ["design", "min_diagrams", "max_diagrams"],
+          "properties": {
+            "design": { "type": "integer", "description": "max words per diagram explanation" },
+            "min_diagrams": { "type": "integer" },
+            "max_diagrams": { "type": "integer" }
+          }
+        }
+      }
+    }
+  ]
+}

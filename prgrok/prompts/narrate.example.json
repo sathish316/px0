@@ -1,0 +1,7 @@
+{
+  "sections": [
+    { "id": "overall", "text": "So this one makes uploads retry when the network hiccups, instead of failing the whole batch on the first error. Three tries, with a growing pause between them." },
+    { "id": "f0", "text": "Everything lives in the uploader. It gets a retry loop and a setting for how many attempts to allow." },
+    { "id": "f0h1", "text": "The interesting bit is the loop. It only retries timeouts and server errors, and it adds a little randomness to the wait so clients don't all come back at once." }
+  ]
+}

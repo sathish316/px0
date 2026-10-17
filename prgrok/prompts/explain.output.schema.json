@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PRGrok explain output",
+  "type": "object",
+  "required": ["overall", "files"],
+  "properties": {
+    "overall": { "type": "string", "description": "WHAT and WHY of the change, within limits.overall words" },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "summary", "hunks"],
+        "properties": {
+          "id": { "type": "string", "description": "file id from the input, e.g. f0" },
+          "summary": { "type": "string", "description": "WHAT and WHY for the file, within limits.file words" },
+          "hunks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id", "summary"],
+              "properties": {
+                "id": { "type": "string", "description": "hunk id from the input, e.g. f0h1" },
+                "summary": { "type": "string", "description": "WHAT then WHY, within limits.hunk words (Markdown)" },
+                "elements": {
+                  "type": "array",
+                  "description": "only when the hunk has more than two code elements",
+                  "items": {
+                    "type": "object",
+                    "required": ["line", "summary"],
+                    "properties": {
+                      "line": { "type": "integer", "minimum": 1, "description": "new-file line where the element starts" },
+                      "kind": { "enum": ["class", "method", "function", "companion", "data", "block"] },
+                      "name": { "type": "string" },
+                      "summary": { "type": "string", "description": "WHAT + WHY, within limits.element words" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

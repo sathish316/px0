@@ -20,6 +20,9 @@ var devWebDir = os.Getenv("PX0_DEV_WEB")
 
 func init() {
 	if devWebDir != "" {
+		if abs, err := filepath.Abs(devWebDir); err == nil {
+			devWebDir = abs
+		}
 		assets = os.DirFS(devWebDir)
 	}
 }

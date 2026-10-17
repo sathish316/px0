@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PRGrok narrate output",
+  "type": "object",
+  "required": ["sections"],
+  "properties": {
+    "sections": {
+      "type": "array",
+      "description": "exactly one entry per input section, same ids",
+      "items": {
+        "type": "object",
+        "required": ["id", "text"],
+        "properties": {
+          "id": { "type": "string" },
+          "text": { "type": "string", "description": "plain spoken prose, shorter than the source text" }
+        }
+      }
+    }
+  }
+}

@@ -30,6 +30,7 @@ import { initLineComment } from './linecomment.js';
 import { initUnpushed, refreshUnpushed } from './unpushed.js';
 import { initPRScope } from './prscope.js';
 import { initViz } from './viz.js';
+import { initPRGrok } from './prgrok.js';
 
 // Initialize all subsystems
 initRenderer();
@@ -61,6 +62,7 @@ initLineComment();
 initUnpushed();
 initPRScope();
 initViz();
+initPRGrok();
 
 // Bootstrap application lifecycle
 (async function boot() {

@@ -1,0 +1,24 @@
+{
+  "overall": "Retries failed uploads with exponential backoff instead of giving up on the first error. Flaky networks were failing whole batches, so `upload` now retries up to three times and surfaces the last error only after that.",
+  "files": [
+    {
+      "id": "f0",
+      "summary": "Adds the retry loop to `uploader.go` and makes the attempt count configurable, so callers on stable networks can opt out.",
+      "hunks": [
+        {
+          "id": "f0h0",
+          "summary": "Adds a `maxRetries` field to `Uploader` with a default of 3.\n\nWithout a bound, a dead endpoint would be retried forever, so the limit is part of the fix and not just a tuning knob."
+        },
+        {
+          "id": "f0h1",
+          "summary": "1. `upload` now wraps `send` in a loop that sleeps `base << attempt` between tries, so short blips recover quickly while long outages back off.\n2. `isRetryable` treats timeouts and 5xx responses as retryable and everything else as final, so a bad request is not repeated three times.\n3. `backoff` adds jitter so many clients do not retry in lockstep.",
+          "elements": [
+            { "line": 41, "kind": "method", "name": "upload", "summary": "Runs `send` up to `maxRetries` times and returns the last error. This is the behavior change the PR is for." },
+            { "line": 58, "kind": "function", "name": "isRetryable", "summary": "Decides which errors are worth retrying, so client mistakes fail fast." },
+            { "line": 66, "kind": "function", "name": "backoff", "summary": "Computes the delay with jitter, so a fleet of clients does not hit the server together." }
+          ]
+        }
+      ]
+    }
+  ]
+}

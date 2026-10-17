@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PRGrok visual output",
+  "type": "object",
+  "required": ["overall", "files", "diagrams"],
+  "properties": {
+    "overall": { "type": "string", "description": "WHAT and WHY, within limits.overall words" },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "summary", "hunks"],
+        "properties": {
+          "id": { "type": "string" },
+          "summary": { "type": "string", "description": "within limits.file words" },
+          "hunks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id", "summary"],
+              "properties": {
+                "id": { "type": "string" },
+                "summary": { "type": "string", "description": "brief WHAT + WHY, within limits.hunk words" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "diagrams": {
+      "type": "array",
+      "minItems": 0,
+      "items": {
+        "type": "object",
+        "required": ["type", "title", "mermaid", "explanation"],
+        "properties": {
+          "type": { "enum": ["er", "sequence", "architecture", "state", "flowchart"] },
+          "title": { "type": "string" },
+          "before": { "type": "string", "description": "architecture only: Mermaid of the current architecture" },
+          "mermaid": { "type": "string", "description": "valid Mermaid, no code fences" },
+          "explanation": { "type": "string", "description": "within limits.design words" }
+        }
+      }
+    }
+  }
+}

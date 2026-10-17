@@ -54,6 +54,7 @@ func cleanBasePath(p string) string {
 type Server struct {
 	ix        *Index
 	viz       vizCache
+	prg       prgState
 	lsp       *lspManager
 	tel       *TelemetryService // nil in tests; Track is nil-safe
 	agent     *agentManager     // nil unless main wires editing for this session
@@ -102,6 +103,12 @@ func (s *Server) registerRoutes() {
 	staticPrefix := s.routePath("/static/")
 	s.mux.Handle(staticPrefix, devNoStore(s.handleStatic(sub, staticPrefix)))
 	s.mux.HandleFunc(s.routePath("/static/themes.css"), s.handleThemes)
+	s.mux.HandleFunc(s.routePath("/api/prgrok/info"), s.handlePRGrokInfo)
+	s.mux.HandleFunc(s.routePath("/api/prgrok/prs"), s.handlePRGrokPRs)
+	s.mux.HandleFunc(s.routePath("/api/prgrok/pr"), s.handlePRGrokPR)
+	s.mux.HandleFunc(s.routePath("/api/prgrok/result"), s.handlePRGrokResult)
+	s.mux.HandleFunc(s.routePath("/api/prgrok/run"), s.handlePRGrokRun)
+	s.mux.HandleFunc(s.routePath("/api/prgrok/job"), s.handlePRGrokJob)
 	if devWebDir != "" {
 		s.mux.HandleFunc(s.routePath("/api/dev/stamp"), s.handleDevStamp)
 	}
@@ -233,7 +240,7 @@ func (s *Server) scavenge() {
 	}
 }
 
-const contentSecurityPolicy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: http:; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'none';"
+const contentSecurityPolicy = "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: http:; connect-src 'self' https://cdn.jsdelivr.net https://huggingface.co https://*.huggingface.co https://*.hf.co; media-src 'self' blob:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'none';"
 
 // ServeHTTP delegates incoming HTTP requests to the configured ServeMux,
 // recording request timing and updating access timestamps.

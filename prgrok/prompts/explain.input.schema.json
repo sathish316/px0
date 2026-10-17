@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PRGrok explain input",
+  "type": "object",
+  "required": [
+    "kind",
+    "title",
+    "diff",
+    "files",
+    "limits"
+  ],
+  "properties": {
+    "kind": {
+      "const": "pull request"
+    },
+    "repo": {
+      "type": "string",
+      "description": "owner/repo or workspace/repo"
+    },
+    "number": {
+      "type": "integer"
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string",
+      "description": "PR body, may be empty"
+    },
+    "limits": {
+      "type": "object",
+      "required": [
+        "overall",
+        "file",
+        "hunk",
+        "element"
+      ],
+      "properties": {
+        "overall": {
+          "type": "integer",
+          "description": "max words, overall summary"
+        },
+        "file": {
+          "type": "integer"
+        },
+        "hunk": {
+          "type": "integer"
+        },
+        "element": {
+          "type": "integer"
+        }
+      }
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "path",
+          "status",
+          "hunks"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "examples": [
+              "f0"
+            ]
+          },
+          "path": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "added",
+              "modified",
+              "deleted",
+              "renamed"
+            ]
+          },
+          "additions": {
+            "type": "integer"
+          },
+          "deletions": {
+            "type": "integer"
+          },
+          "hunks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "header"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "examples": [
+                    "f0h1"
+                  ]
+                },
+                "header": {
+                  "type": "string",
+                  "description": "the @@ line"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "diff": {
+      "type": "string",
+      "description": "Annotated unified diff: 'FILE <id>: <path>' and 'HUNK <id>: <header>' headings, each code line prefixed by a 6-column new-file line number"
+    }
+  }
+}

@@ -442,6 +442,41 @@ function mermaidOutputFor(wrap) {
   return output;
 }
 
+// Pastel/light node fills (e.g. classDef fill:#d1fae5) clash with the light text
+// dark themes use, so force black labels on any node or cluster with a light fill.
+const MERMAID_LIGHT_FILL_LUMINANCE = 0.6;
+
+function parseCssRGB(value) {
+  const m = /^rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)(?:[,\s/]+([\d.]+%?))?\s*\)$/.exec(value || '');
+  if (!m) return null;
+  let alpha = m[4] === undefined ? 1 : parseFloat(m[4]);
+  if (m[4] && m[4].endsWith('%')) alpha /= 100;
+  return { r: +m[1], g: +m[2], b: +m[3], a: alpha };
+}
+
+function relativeLuminance({ r, g, b }) {
+  const lin = c => {
+    const v = c / 255;
+    return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+}
+
+function fixLightNodeText(svg) {
+  for (const group of svg.querySelectorAll('g.node, g.cluster')) {
+    const shape = group.querySelector(':scope > rect, :scope > polygon, :scope > path, :scope > circle, :scope > ellipse, :scope > g > rect, :scope > g > polygon, :scope > g > path, :scope > g > circle, :scope > g > ellipse');
+    if (!shape) continue;
+    const fill = parseCssRGB(getComputedStyle(shape).fill);
+    if (!fill || fill.a < 0.5 || relativeLuminance(fill) < MERMAID_LIGHT_FILL_LUMINANCE) continue;
+    for (const text of group.querySelectorAll('text, tspan')) {
+      text.style.setProperty('fill', '#000', 'important');
+    }
+    for (const label of group.querySelectorAll('span, div, p')) {
+      label.style.setProperty('color', '#000', 'important');
+    }
+  }
+}
+
 function mountDiagram(output, wrap, pre, svgCode) {
   const canvas = document.createElement('div');
   canvas.className = 'md-mermaid-canvas';
@@ -456,6 +491,7 @@ function mountDiagram(output, wrap, pre, svgCode) {
   wrap.classList.add('md-mermaid-ready');
 
   if (svg) {
+    fixLightNodeText(svg);
     setupDiagramControlsAndPan(output, canvas, svg);
   }
 }
