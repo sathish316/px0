@@ -100,8 +100,11 @@ func (s *Server) routePath(subpath string) string {
 func (s *Server) registerRoutes() {
 	sub, _ := fs.Sub(assets, "web")
 	staticPrefix := s.routePath("/static/")
-	s.mux.Handle(staticPrefix, s.handleStatic(sub, staticPrefix))
+	s.mux.Handle(staticPrefix, devNoStore(s.handleStatic(sub, staticPrefix)))
 	s.mux.HandleFunc(s.routePath("/static/themes.css"), s.handleThemes)
+	if devWebDir != "" {
+		s.mux.HandleFunc(s.routePath("/api/dev/stamp"), s.handleDevStamp)
+	}
 
 	if s.basePath != "/" && s.basePath != "" {
 		s.mux.HandleFunc(s.basePath, s.handleIndex)
@@ -629,6 +632,10 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 		html = html[:idx+6] + "\n" + baseTag + html[idx+6:]
 	} else {
 		html = baseTag + "\n" + html
+	}
+	if devWebDir != "" {
+		html = devInjectSnippet(html, s.devReloadSnippet())
+		w.Header().Set("Cache-Control", "no-store")
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	io.WriteString(w, html)
